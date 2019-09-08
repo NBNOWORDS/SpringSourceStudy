@@ -28,6 +28,10 @@ import com.dch.pojo.Car;
  * 		把Spring底层一些组件注入到自定义的Bean中
  * 		xxxAware，功能使用xxxProcessor:
  * 				ApplicationContextAware==>ApplicationContextAwareProcessor
+ * 				ApplicationContextAwareProcessor调用postProcessBeforeInitialization()方法
+ * 				在postProcessBeforeInitialization方法中调用invokeAwareInterfaces()方法
+ * 				在invokeAwareInterfaces()方法中调用setApplicationContext()方法获取applicationContext
+ * 		可在Red.setApplicationContext处断点查看
  * @author DENGCHENGHAO
  *
  */

@@ -103,7 +103,46 @@ import com.dch.config.MyConfigOfAop;
  * 							JdkDynamicAopProxy(config);jdk动态代理
  * 							objenesisCglibAopProxy(config);cglib动态代理
  * 			4)、给容器中返回当前组件使用cglib增强了的对象代理
- * 			5)、以后容器中获取到的就是这个组件的代理对象，执行目标方法的时候，代理对象会窒息感通知方法的流程
+ * 			5)、以后容器中获取到的就是这个组件的代理对象，执行目标方法的时候，代理对象就会执行通知方法的流程
+ * 3)、目标方法执行
+ * 		容器中保存了组件的代理对象（cglib增强后的对象），这个对象里面保存了详细信息（比如增强器，目标对象，xxx）
+ * 		1)、CglibAopProxy.intercept();拦截目标方法的执行
+ * 		2)、根据ProxyFactory对象获取将要执行的目标方法的拦截器链
+ * 			List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
+ * 			1)、List<Object> interceptorList 保存所有拦截器 5个
+ * 					一个默认的ExposeInvocationInterceptor和4个增强器
+ * 			2)、遍历所有的增强器，将其转为Interceptor：
+ * 					registry.getInterceptors(advisor)
+ * 			3)、将增强器转为List<MethodInterceptor>
+ * 					如果是MethodInterceptor，直接加入到集合中
+ * 					如果不是，使用AdvisorAdapter转为MethodInterceptor
+ * 		3)、如果没有拦截器链，直接执行目标方法
+ * 			拦截器(每一个通知方法又被包装为方法拦截器，利用MethodInterceptor机制)
+ * 		4)、如果有拦截器链，把需要执行的目标对象，目标方法、拦截器链等信息传入创建一个CglibMethodInvocation对象，
+ * 				并调用它的proceed()方法，
+ * 				retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
+ * 				proceed()方法为拦截器链的触发过程
+ * 		5)、拦截器链的触发过程
+ * 				1)、如果没有拦截器执行目标方法，或者拦截器的索引和拦截器数组-1大小一样（指定到了最后一个拦截器，执行目标方法）
+ * 				2)、链式获取每一个拦截器，拦截器执行invoke方法，每一个拦截器等待下一个拦截器执行完成返回以后再来执行
+ * 						拦截器链的机制，保证通知方法与目标方法的顺序
+ * 
+ * 	总结
+ * 			1)、 @EnableAspectJAutoProxy 开启aop功能
+ * 			2)、 @EnableAspectJAutoProxy 会给容器中注册一个组件AnnotationAwareAspectJAutoProxyCreator
+ * 			3)、AnnotationAwareAspectJAutoProxyCreator是一个后置处理器
+ * 			4)、容器的创建流程：
+ * 					1)、registerBeanPostProcessors()注册后置处理器，创建AnnotationAwareAspectJAutoProxyCreator对象
+ * 					2)、finishBeanFactoryInitialization()初始化剩下的单实例bean
+ * 						1)、创建业务逻辑组件切面组件
+ * 						2)、AnnotationAwareAspectJAutoProxyCreator拦截组件的创建
+ * 						3)、组件创建完之后，判断组件是否需要增强
+ * 							是，切面的通知方法，包装成增强器(Advisor)；给业务逻辑组件创建一个代理对象(cglib)
+ * 			5)、执行目标方法
+ * 					1)、代理对象执行目标方法
+ * 					2)、CglibAopProxy.intercept()
+ * 						1)、得到目标方法的拦截器链（增强器包装成拦截器MethodInterceptor）
+ * 						2)、利用拦截器的链式机制，依次进入每一个拦截器进行执行
  * @author DENGCHENGHAO
  *
  */
@@ -111,9 +150,10 @@ public class AopTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		ApplicationContext applicationContext = new AnnotationConfigApplicationContext(MyConfigOfAop.class);
+		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(MyConfigOfAop.class);
 		MathCalculator mathCalculator = applicationContext.getBean(MathCalculator.class);
 		mathCalculator.div(2, 1);
+		applicationContext.close();
 	}
 
 }

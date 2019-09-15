@@ -7,7 +7,10 @@ import org.springframework.context.ApplicationContextAware;
 
 public class Red implements ApplicationContextAware, BeanNameAware{
 	private ApplicationContext applicationContext;
-
+	
+	public Red() {
+		System.out.println("red construction.....");
+	}
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		// TODO Auto-generated method stub

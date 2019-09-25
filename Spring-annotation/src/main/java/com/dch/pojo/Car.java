@@ -17,4 +17,10 @@ public class Car {
 	public void setCarName(String carName) {
 		this.carName = carName;
 	}
+
+	@Override
+	public String toString() {
+		return "Car [carName=" + carName + "]";
+	}
+	
 }

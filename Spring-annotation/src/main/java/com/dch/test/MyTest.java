@@ -37,7 +37,7 @@ import com.dch.pojo.Car;
  */
 public class MyTest {
 	public static void main(String[] args) throws Exception {
-		ApplicationContext ac = new AnnotationConfigApplicationContext(MyConfig.class);
+		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(MyConfig.class);
 		Car car = (Car)ac.getBean("car");
 		System.out.println(car);
 		System.out.println("-----¹¤³§-----");
